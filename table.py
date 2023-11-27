@@ -81,6 +81,8 @@ def join_tables(first: Table, second: Table, first_field: str, second_field: str
             index[row[second_field]] = [row]
             
     for row in first.data:
+        if  not row[first_field] in index:
+            continue
         for adendum in index[row[first_field]]:
             new_row = {}
 

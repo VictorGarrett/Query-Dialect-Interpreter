@@ -1,27 +1,9 @@
-import csv_importer as importer
+import csv_importer
 from table import join_tables
+from mysql_importer import import_mysql_to_database
+import file_handler
 
-print("importing")
-tab = importer.import_table("./cities2.csv", "taba", [])
-tabb = importer.import_table("./cities2.csv", "tabb", [])
-
-importer.export_table("./cities3.csv", tab)
-
-print(tab.data)
-
-tab2 = tab.select(["City","State"])
-
-print(tab2.data)
-
-tab_fil = tab.filter(["LatD", "LatM"], [lambda x: x > 40, lambda x: x > 20], "AND")
-importer.export_table("./cities_fil.csv", tab_fil)
-
-tab_fil.order(["LatM", "LatD"], False)
-importer.export_table("./cities_fil_ord.csv", tab_fil)
+import_mysql_to_database("root", "pwd", "employees", ["departments", "employees"], "test_emp")
+csv_importer.import_dir_csv_to_database(".", "test_csv")
 
 
-tab3 = join_tables(tab, tab2, "City", "City")
-
-print("\n\n JOINED \n\n")
-print(tab3.data)
-importer.export_table("./citiesjoin.csv", tab3)
