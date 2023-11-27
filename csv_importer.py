@@ -1,12 +1,13 @@
 import csv
 from table import Table
 
-def import_table(file: str, column_names: list, delimiter = ','):
+def import_table(file: str, table_name: str, column_names: list, delimiter = ','):
 
-    new_table = Table(column_names)
+    new_table = Table(table_name ,column_names)
+    
     with open(file, newline='') as csv_file:
         reader = csv.DictReader(csv_file, quotechar='"', skipinitialspace=True)
-
+        new_table.set_column_names(reader.fieldnames)
        #if len(column_names) == 0:
             #reader.
             #names_to_csv_col = {}
@@ -32,3 +33,13 @@ def import_table(file: str, column_names: list, delimiter = ','):
             new_table.add_row(row)
     
     return new_table
+
+def export_table(file: str, table: Table):
+
+    with open(file, 'w', newline='') as csvfile:
+
+        writer = csv.DictWriter(csvfile, fieldnames=table.column_names)
+
+        writer.writeheader()
+        for row in table.data:
+            writer.writerow(row)
