@@ -7,9 +7,8 @@ import re
 
 def import_dir_csv_to_database(directory: str, to_database: str):
 
-    dirs = listdir(directory) 
-    print(dirs)
-    print(dirs[0])
+    if not os.path.exists(directory):
+        print("Diretório inexistente!") 
     for file in listdir(directory):
         if file[-4:] == ".csv":
             new_table = import_table_csv(file, re.split("/|\.", file)[-2], [])

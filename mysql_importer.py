@@ -2,116 +2,118 @@ import mysql.connector as connector
 from table import Table
 import file_handler
 
-user_global = 'root'
-password_global = 'NuncaFoiMole.123'
-database_global = 'employees'
-host_global = '127.0.0.1'
-destination = 'CSV_Database'
 
-
-def mysql_connector():
-
-    cnx_params = {
-        'host': host_global,
-        'user': user_global,
-        'password': password_global,
-        'database': selected_database_global,
-    }
-
-    try:
-        db_connection = connector.connect(**cnx_params)
-    except:
-        print("error : Schema not found")
-        return False
-
-    print('\nConectado!\n')
-    return db_connection
-
-
-def list_mysql_schemas():
-    cnx = connector.connect(user=user_global, password=password_global,
-                            host=host_global, database=database_global)
-    cursor = cnx.cursor()
+def list_mysql_schemas(cursor):
+    schemas = []
     cursor.execute("SHOW DATABASES;")
     print("\nEsquemas no servidor MySQL: ")
-    for (databases) in cursor:
-        print('* '+databases[0])
+    rows = cursor.fetchall()
+    for row in rows:
+        print('* '+row['Database'])
+        schemas.append(row['Database'])
+
+    return schemas
 
 
-def list_mysql_tables(cursor):
-    print("Tabelas do esquema {}:".format(selected_database_global))
-    cursor.execute("SHOW TABLES;")
-    for row in cursor:
-        for key in row:
-            print('* ' + row[key] .strip("'"))
-
+def list_mysql_tables(cursor, database):
+    tables = []
+    print(f"Tabelas do esquema {database}:")
+    cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.tables where TABLE_SCHEMA = \"" + database + "\" and TABLE_TYPE = \"BASE TABLE\"")
+    for row in cursor.fetchall():
+        #print(row)
+        print('* ' + row["TABLE_NAME"])
+        tables.append(row["TABLE_NAME"])
+    return tables
 
 def importer():
 
     global selected_database_global
 
-    list_mysql_schemas()
-    cnx = None
-    while not cnx:
-        print("Digite nome do esquema a selecionar: ")
-        selected_database_global = input('>> ')
-        cnx = mysql_connector()
+    print("Digite seu usuário MySQL: ")
+    user = input('>> ')
+    print("Digite sua senha: ")
+    pwd = input('>> ')
 
+    cnx = connector.connect(user=user, password=pwd,
+                            host='127.0.0.1')
+    
+    if not cnx or not cnx.is_connected():
+        print("could not connect")
+        return
+    
     cursor = cnx.cursor(dictionary=True, buffered=True)
 
-    list_mysql_tables(cursor)
-    print("Digite nome da(s) tabela(s) a selecionar (Utilizar notação ): ")
-    tables = input('>> ')
+    all_schemas = list_mysql_schemas(cursor)
 
-    cnx = mysql_connector()
+    print("Digite nome do esquema a selecionar: ")
+    schema = input('>> ')
 
-    if cnx and cnx.is_connected():
+    if not schema in all_schemas:
+        print("esquema não reconhecido!")
+        return
 
-        with cnx.cursor() as cursor:
+    all_tables = list_mysql_tables(cursor, schema)
 
-            for table_name in tables:
-                # cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.tables where TABLE_SCHEMA = \"employees\" AND TABLE_TYPE = \"BASE TABLE\"")
-                cursor.execute(
-                    "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.columns where TABLE_SCHEMA = \"" + database_global + "\" AND TABLE_NAME = \"" + table_name +"\"")
+    print("Digite nome das tabelas a selecionar (tabela1, tabela2, ...): ")
+    tables_input = input('>> ')
+    
+    tables_input_list = tables_input.split(", ")
+    #print(tables_input_list)
+    tables = []
+    for table_input in tables_input_list:
+        if not table_input in all_tables:
+            print("A tabela "+ table_input + " não existe. Ignorando")
+            continue
+        tables.append(table_input)
+    
+    print("Digite nome do banco de dados de destino: ")
+    destination = input('>> ')
+    
 
-                print("rows")
-                rows = cursor.fetchall()
-                print(rows)
-                print("for")
-                field_names = []
-                for row in rows:
-                    field_names.append(row[0])
-                    print(row)
+    for table_name in tables:
+        # cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.tables where TABLE_SCHEMA = \"employees\" AND TABLE_TYPE = \"BASE TABLE\"")
+        cursor.execute(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.columns where TABLE_SCHEMA = \"" + schema + "\" AND TABLE_NAME = \"" + table_name +"\"")
 
-                print(field_names)
+        #print("rows")
+        rows = cursor.fetchall()
+        #print(rows)
+        #print("for")
+        field_names = []
+        for row in rows:
+            #field_names.append(row[0])
+            field_names.append(row["COLUMN_NAME"])
+            #print(row)
 
-                field_names_str = ""
-                for field in field_names:
-                    field_names_str = field_names_str + field + ', '
+        #print(field_names)
 
-                field_names_str = field_names_str[:-2]
-                print(field_names_str)
+        field_names_str = ""
+        for field in field_names:
+            field_names_str = field_names_str + field + ', '
 
-                cursor.execute("SELECT " + field_names_str +
-                               " FROM " + table_name)
+        field_names_str = field_names_str[:-2]
+        #print(field_names_str)
 
-                rows = cursor.fetchall()
+        cursor.execute("USE " + schema)
+        cursor.execute("SELECT " + field_names_str +
+                        " FROM " + table_name)
 
-                new_table = Table(table_name, field_names)
+        rows = cursor.fetchall()
 
-                for row in rows:
-                    new_row = {}
-                    for i in range(len(field_names)):
-                        new_row[field_names[i]] = row[i]
-                    new_table.add_row(new_row)
+        new_table = Table(table_name, field_names)
 
-                print("newtable")
-                print(new_table.data)
-                # importer.export_table(table_name + ".csv", new_table)
-                file_handler.save_table_to_database(new_table, destination)
+        for row in rows:
+            #print(row)
+            new_row = {}
+            for i in range(len(field_names)):
+                #new_row[field_names[i]] = row[i]
+                new_row[field_names[i]] = row[field_names[i]]
+            new_table.add_row(new_row)
 
-        cnx.close()
+        #print("newtable")
+        #print(new_table.data)
+        # importer.export_table(table_name + ".csv", new_table)
+        file_handler.save_table_to_database(new_table, destination)
 
-    else:
-
-        print("Could not connect")
+    cnx.close()
+    print("importacao completa")

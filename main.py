@@ -162,8 +162,14 @@ def importer():
         option = input(">> ")
     if option == "mysql":
         mysql_imp.importer()
-    # elif option == "csv":
-        # csv_import.csv_import()
+    elif option == "csv":
+        print(
+            "Digite o nome do diretório:")
+        dir = input(">> ")
+        print(
+            "Digite o nome do banco para o qual importar:")
+        db = input(">> ")
+        csv_importer.import_dir_csv_to_database(dir, db)
     return
 
 
