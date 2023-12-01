@@ -6,10 +6,10 @@ import file_handler
 def list_mysql_schemas(cursor):
     schemas = []
     cursor.execute("SHOW DATABASES;")
-    print("\nEsquemas no servidor MySQL: ")
+    print("\nBancos disponíveis no MySQL: ")
     rows = cursor.fetchall()
     for row in rows:
-        print('* '+row['Database'])
+        print('-'+row['Database'])
         schemas.append(row['Database'])
 
     return schemas
@@ -17,22 +17,20 @@ def list_mysql_schemas(cursor):
 
 def list_mysql_tables(cursor, database):
     tables = []
-    print(f"Tabelas do esquema {database}:")
+    print(f"Tabelas do banco {database}:")
     cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.tables where TABLE_SCHEMA = \"" + database + "\" and TABLE_TYPE = \"BASE TABLE\"")
     for row in cursor.fetchall():
         #print(row)
-        print('* ' + row["TABLE_NAME"])
+        print('-' + row["TABLE_NAME"])
         tables.append(row["TABLE_NAME"])
     return tables
 
-def importer():
+def import_form_mysql():
 
-    global selected_database_global
-
-    print("Digite seu usuário MySQL: ")
-    user = input('>> ')
+    print("Digite seu usuário MySQL:")
+    user = input()
     print("Digite sua senha: ")
-    pwd = input('>> ')
+    pwd = input()
 
     cnx = connector.connect(user=user, password=pwd,
                             host='127.0.0.1')
@@ -45,17 +43,17 @@ def importer():
 
     all_schemas = list_mysql_schemas(cursor)
 
-    print("Digite nome do esquema a selecionar: ")
-    schema = input('>> ')
+    print("Digite nome do banco a ser importado:")
+    schema = input()
 
     if not schema in all_schemas:
-        print("esquema não reconhecido!")
+        print("banco não encontrado!")
         return
 
     all_tables = list_mysql_tables(cursor, schema)
 
-    print("Digite nome das tabelas a selecionar (tabela1, tabela2, ...): ")
-    tables_input = input('>> ')
+    print("Digite nome das tabelas a importar (tabela1, tabela2, ...): ")
+    tables_input = input()
     
     tables_input_list = tables_input.split(", ")
     #print(tables_input_list)
@@ -67,7 +65,7 @@ def importer():
         tables.append(table_input)
     
     print("Digite nome do banco de dados de destino: ")
-    destination = input('>> ')
+    destination = input()
     
 
     for table_name in tables:
@@ -116,4 +114,4 @@ def importer():
         file_handler.save_table_to_database(new_table, destination)
 
     cnx.close()
-    print("importacao completa")
+    print("importação completa")
