@@ -36,24 +36,45 @@ class Table:
     
     def filter(self, fields: list, operators: list, modifier: str = ''):
 
+        treated_fields = []
+        for field in fields:
+            if not field in self.column_names:
+                if field.split(".")[1] in self.column_names:
+                    treated_fields.append(field.split(".")[1])
+                else:
+                    print(f"ERRO: não há o campo {field} em {self.table_name}")
+                    return None
+            treated_fields.append(field)
+
         new_table = Table(self.table_name + "_fil", self.column_names)
-        if modifier == '' or len(fields) == 1:
+        if modifier == '' or len(treated_fields) == 1:
             for row in self.data:
-                if operators[0](row[fields[0]]):
+                if operators[0](row[treated_fields[0]]):
                     new_table.add_row(row)
         elif modifier == 'OR':
             for row in self.data:
-                if operators[0](row[fields[0]]) or operators[1](row[fields[1]]):
+                if operators[0](row[treated_fields[0]]) or operators[1](row[treated_fields[1]]):
                     new_table.add_row(row)
         elif modifier == 'AND':
             for row in self.data:
-                if operators[0](row[fields[0]]) and operators[1](row[fields[1]]):
+                if operators[0](row[treated_fields[0]]) and operators[1](row[treated_fields[1]]):
                     new_table.add_row(row)
         
         return new_table
     
     def order(self, fields: list, descending: bool):
+
+        treated_fields = []
         for field in fields:
+            if not field in self.column_names:
+                if field.split(".")[1] in self.column_names:
+                    treated_fields.append(field.split(".")[1])
+                else:
+                    print(f"ERRO: não há o campo {field} em {self.table_name}")
+                    return None
+            treated_fields.append(field)
+
+        for field in treated_fields:
             self.data.sort(key = lambda x: x[field], reverse = descending)
 
 
@@ -64,12 +85,32 @@ class Table:
 
 def join_tables(first: Table, second: Table, first_field: str, second_field: str):
     
+    if not first_field in first.column_names:
+        if first_field.split(".")[1] in first.column_names:
+            first_field = first_field.split(".")[1]
+        else:
+            print(f"ERRO: não há o campo {first_field} em {first.table_name}")
+            return None
+        
+    if not second_field in first.column_names:
+        if second_field.split(".")[1] in first.column_names:
+            second_field = second_field.split(".")[1]
+        else:
+            print(f"ERRO: não há o campo {second_field} em {second.table_name}")
+            return None
+        
     fields = []
-
     for field in first.column_names:
-        fields.append(first.table_name + "." + field)
+        if len(field.split(".")) > 1:
+            fields.append(field)
+        else:
+            fields.append(first.table_name + "." + field)
     for field in second.column_names:
-        fields.append(second.table_name + "." + field)
+        if len(field.split(".")) > 1:
+            fields.append(field)
+        else:
+            fields.append(second.table_name + "." + field)
+        
 
     new_table = Table(first.table_name + "_j_" + second.table_name, fields)
 
@@ -87,9 +128,15 @@ def join_tables(first: Table, second: Table, first_field: str, second_field: str
             new_row = {}
 
             for field in first.column_names:
-                new_row[first.table_name + "." + field] = row[field]
-            for field in second.column_names:      
-                new_row[second.table_name + "." + field] = adendum[field]
+                if len(field.split(".")) > 1:
+                    new_row[field] = row[field]
+                else:
+                    new_row[first.table_name + "." + field] = row[field]
+            for field in second.column_names:
+                if len(field.split(".")) > 1:
+                    new_row[field] = adendum[field]
+                else:      
+                    new_row[second.table_name + "." + field] = adendum[field]
 
             new_table.add_row(new_row)
 

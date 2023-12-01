@@ -2,6 +2,15 @@ from table import Table
 import os
 import csv
 
+def output_table(table: Table):
+
+    with open("./saida.csv", 'w', newline='') as csvfile:
+
+        writer = csv.DictWriter(csvfile, fieldnames=table.column_names)
+
+        writer.writeheader()
+        for row in table.data:
+            writer.writerow(row)
 
 def save_table_to_database(table: Table, to_database: str):
 
