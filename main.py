@@ -32,7 +32,7 @@ def handle_query():
 option = None
 while option != "Sair":
 
-    print("Digite uma opção (Importar, Consualtar, Sair):")
+    print("Digite uma opção (Importar, Consultar, Sair):")
     option = input()
     if option == "Importar":
         handle_import()

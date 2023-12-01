@@ -26,6 +26,8 @@ class Table:
         self.column_names = column_names
 
     def select(self, selected_fields: list):
+        if len(selected_fields) == 0:
+            selected_fields = self.column_names
         new_table = Table(self.table_name + "_sel", selected_fields)
         for row in self.data:
             new_row = {}
@@ -44,7 +46,8 @@ class Table:
                 else:
                     print(f"ERRO: não há o campo {field} em {self.table_name}")
                     return None
-            treated_fields.append(field)
+            else:
+                treated_fields.append(field)
 
         new_table = Table(self.table_name + "_fil", self.column_names)
         if modifier == '' or len(treated_fields) == 1:
@@ -72,10 +75,23 @@ class Table:
                 else:
                     print(f"ERRO: não há o campo {field} em {self.table_name}")
                     return None
-            treated_fields.append(field)
+            else:
+                treated_fields.append(field)
 
         for field in treated_fields:
             self.data.sort(key = lambda x: x[field], reverse = descending)
+
+    def update(self, fields: list, operators: list, condition_field: str, condition):
+        for i in range(len(self.data)):
+            if condition(self.data[i][condition_field]):
+                for j in range(len(fields)):
+                    self.data[i][fields[j]] = operators[j](self.data[i][fields[j]])
+    
+    def delete(self, condition_field: str, condition):
+        self.data = list(filter(lambda x: not condition(x[condition_field]), self.data))
+
+
+
 
 
     
