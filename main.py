@@ -25,7 +25,7 @@ def handle_query():
     query_input_string = input()
 
     parser = Parser(db)
-    parser.parse_query(query_input_string)
+    parser.run_query(query_input_string)
 
 
 

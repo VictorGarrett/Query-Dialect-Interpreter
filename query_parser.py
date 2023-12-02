@@ -86,12 +86,14 @@ class Parser:
         if len(parameters_dict["SELECIONE"]) == 0:
             print("ERRO: é preciso selecionar alguma coluna")
             return
-        for column in parameters_dict["SELECIONE"]:
-            #print(column)
-            #print(column.split("."))
-            if len(column.split(".")) != 2:
-                print("ERRO: é preciso selecionar as colunas com a forma: <nome_tabela>.<nome_coluna>")  
-                return  
+        
+        if not parameters_dict["SELECIONE"][0] == "*":
+            for column in parameters_dict["SELECIONE"]:
+                #print(column)
+                #print(column.split("."))
+                if len(column.split(".")) != 2:
+                    print("ERRO: é preciso selecionar as colunas com a forma: <nome_tabela>.<nome_coluna>")  
+                    return  
         if len(parameters_dict["DE"]) == 0:
             print("ERRO: é preciso selecionar de alguma tabela")
             return
@@ -115,16 +117,16 @@ class Parser:
                 return
         
         field_names = []
-        if join_done:
-            field_names = parameters_dict["SELECIONE"]
-        else:
-            for field in parameters_dict["SELECIONE"]:
-                field_names.append(field.split(".")[1])
+        if parameters_dict["SELECIONE"][0] != "*":
+            if join_done:
+                field_names = parameters_dict["SELECIONE"]
+            else:
+                for field in parameters_dict["SELECIONE"]:
+                    field_names.append(field.split(".")[1])
 
         #print("field names")
         #print(field_names)
-        if parameters_dict["SELECIONE"][0].split(".")[1] == "*":
-            field_names = []
+        
         first_table = first_table.select(field_names)
 
 
@@ -252,7 +254,7 @@ class Parser:
         print("Campos deletados com sucesso")
         
 
-    def parse_query(self, query_string: str):
+    def run_query(self, query_string: str):
         query_words = query_string.split(' ')
         
         if query_words == 0:
